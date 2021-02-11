@@ -4,12 +4,15 @@ import java.util.Map;
 import java.util.Stack;
 
 public class Solution {
-    private static StringBuilder coefficient;
+    private static int totalCo;
+    private static StringBuilder coefficient, variable;
+    private static boolean isReducible;
+    private static int sign;
 
-    public static String simplify(String[] examples, String formula) {
-        coefficient = new StringBuilder();
+    public static void simplify(String[] examples, String formula) {
+        final StringBuilder s = new StringBuilder();
 
-        Map<String, String> equations = new HashMap<>();
+        final Map<String, String> equations = new HashMap<>();
 
         Arrays.stream(examples)
               .forEach(equation -> {
@@ -17,28 +20,119 @@ public class Solution {
                   equations.put(a[1].trim(), a[0].trim());
               });
 
-        Stack<String> stack = new Stack<>();
-
+        //remove whitespace
         formula.chars()
-               .forEach(i -> {
-                   if (i >= 48 && i <= 57)
-                       coefficient.append((char)i);
-                   else{
-                       if (coefficient.length() > 0) {
-                           stack.push(coefficient.toString());
-                           stack.push(String.valueOf((char)i));
-                           coefficient = new StringBuilder();
-                       }else
-                           stack.push(String.valueOf((char)i));
-                   }
-               });
+               .filter(i -> i != 32)
+               .forEach(i -> s.append((char)i));
 
-
-        return process(equations, stack);
+        System.out.println(reduce(s, equations));
+        System.out.println(removeBraces(s, equations));
     }
 
-    private static String process(Map<String, String> equations, Stack<String> stack){
-        
+    private static String reduce(StringBuilder s, Map<String, String> equations){
+        StringBuilder s1 = new StringBuilder();
+        variable = new StringBuilder();
+
+        isReducible = false;
+
+        s.chars()
+         .forEach(i -> {
+             if ((i >= 65 && i <= 90) || (i >= 97 && i <= 122))
+                 variable.append((char) i);
+             else {
+                 if (variable.length() > 0) {
+                     if (equations.containsKey(variable.toString())) {
+                         s1.append('(');
+                         s1.append(equations.get(variable.toString()));
+                         s1.append(')');
+
+                         isReducible = true;
+                     }
+                     else s1.append(variable);
+                     variable = new StringBuilder();
+                 }
+                 s1.append((char) i);
+             }
+         });
+
+        if (variable.length() > 0) {
+            if (equations.containsKey(variable.toString())) {
+                s1.append('(');
+                s1.append(equations.get(variable.toString()));
+                s1.append(')');
+                isReducible = true;
+            }
+            else s1.append(variable);
+        }
+
+        if (!isReducible) {
+            variable = new StringBuilder();
+            return s1.toString();
+        }
+
+        return reduce(s1, equations);
     }
 
+    private static String removeBraces(StringBuilder s, Map<String, String> equations){
+        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder result = new StringBuilder();
+        coefficient = new StringBuilder();
+        Stack<Integer> stack = new Stack<>();
+        totalCo = 1;
+        sign = 43;
+
+        //remove whitespace
+        reduce(s, equations).chars()
+          .filter(i -> i != 32)
+          .forEach(i -> stringBuilder.append((char)i));
+
+        stringBuilder.chars()
+                     .forEach(i -> {
+                         if (i >= 48 && i <= 57)
+                             coefficient.append((char) i);
+                         else if (i == 43 || i == 45){
+                             if (!variable.isEmpty()) {
+                                 result.append(variable);
+                                 variable = new StringBuilder();
+                             }
+                             //result.append((char)i);
+                             sign = i;
+                         }else if (i == 40){
+                             if (!coefficient.isEmpty()) {
+                                 totalCo = sign == 43 ? totalCo * Integer.parseInt(coefficient.toString()) : totalCo * Integer.parseInt(coefficient.toString()) * -1;
+                                 stack.push(sign == 43 ? Integer.parseInt(coefficient.toString()) : Integer.parseInt(coefficient.toString()) * -1);
+                                 coefficient = new StringBuilder();
+                             }else {
+                                 stack.push(sign == 43 ? 1 : -1);
+                                 totalCo *= stack.peek();
+                             }
+                             sign = 43;
+                         }else if (i == 41) {
+                             if (!variable.isEmpty()){
+                                 result.append(variable);
+                                 variable = new StringBuilder();
+                             }
+                             totalCo /= stack.pop();
+                         }
+                         else {
+                             if (!coefficient.isEmpty()){
+                                 result.append(totalCo * Integer.parseInt(coefficient.toString()) > 0 ? '+' + String.valueOf(totalCo * Integer.parseInt(coefficient.toString())) : totalCo);
+                                 coefficient = new StringBuilder();
+                             }else
+                                 result.append(sign == 43 ? String.valueOf(totalCo) : totalCo * -1);
+                             variable.append((char) i);
+                         }
+                     });
+
+        if (!variable.isEmpty())
+            result.append(variable);
+
+        return result.toString();
+    }
+
+    public static void main(String[] args) {
+        String[] a = new String[]{"a + 3g = k", "-70a = g"};
+        Solution.simplify(a, "-k + a");
+
+    }
 }

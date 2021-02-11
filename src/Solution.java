@@ -6,8 +6,9 @@ import java.util.Stack;
 public class Solution {
     private static int totalCo;
     private static StringBuilder coefficient, variable;
+    private static String var;
     private static boolean isReducible;
-    private static int sign;
+    private static int sign, numberOfMinuses, co;
 
     public static void simplify(String[] examples, String formula) {
         final StringBuilder s = new StringBuilder();
@@ -116,10 +117,13 @@ public class Solution {
                          }
                          else {
                              if (!coefficient.isEmpty()){
-                                 result.append(totalCo * Integer.parseInt(coefficient.toString()) > 0 ? '+' + String.valueOf(totalCo * Integer.parseInt(coefficient.toString())) : totalCo);
+                                 result.append((char) sign);
+                                 result.append(totalCo * Integer.parseInt(coefficient.toString()));
                                  coefficient = new StringBuilder();
-                             }else
-                                 result.append(sign == 43 ? String.valueOf(totalCo) : totalCo * -1);
+                             }else {
+                                 result.append((char) sign);
+                                 result.append(totalCo);
+                             }
                              variable.append((char) i);
                          }
                      });
@@ -128,6 +132,32 @@ public class Solution {
             result.append(variable);
 
         return result.toString();
+    }
+
+    private static String evaluate(StringBuilder s, Map<String, String> equations){
+
+        numberOfMinuses = 0;
+
+        String s1 = removeBraces(s, equations);
+
+        coefficient = new StringBuilder();
+        variable = new StringBuilder();
+
+        s1.chars()
+          .forEach(i -> {
+              if (i == 45 || i == 43) {
+                  numberOfMinuses = i == 45 ? numberOfMinuses + 1 : numberOfMinuses;
+                  if (!variable.isEmpty())
+                      var = variable.toString();
+              } else if (i >= 48 && i <= 57){
+                  co = numberOfMinuses % 2 == 0 ? 1 : -1;
+                  coefficient.append((char)i);
+              } else {
+                  co = co * Integer.parseInt(coefficient.toString());
+                  variable.append((char)i);
+              }
+          });
+
     }
 
     public static void main(String[] args) {

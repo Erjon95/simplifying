@@ -8,9 +8,9 @@ public class Solution {
     private static StringBuilder coefficient, variable;
     private static String var;
     private static boolean isReducible;
-    private static int sign, numberOfMinuses, co;
+    private static int sign, numberOfMinuses, co, result;
 
-    public static void simplify(String[] examples, String formula) {
+    public static String simplify(String[] examples, String formula) {
         final StringBuilder s = new StringBuilder();
 
         final Map<String, String> equations = new HashMap<>();
@@ -26,8 +26,7 @@ public class Solution {
                .filter(i -> i != 32)
                .forEach(i -> s.append((char)i));
 
-        System.out.println(reduce(s, equations));
-        System.out.println(removeBraces(s, equations));
+        return evaluate(s, equations);
     }
 
     private static String reduce(StringBuilder s, Map<String, String> equations){
@@ -136,7 +135,7 @@ public class Solution {
 
     private static String evaluate(StringBuilder s, Map<String, String> equations){
 
-        numberOfMinuses = 0;
+        numberOfMinuses = result = 0;
 
         String s1 = removeBraces(s, equations);
 
@@ -147,22 +146,26 @@ public class Solution {
           .forEach(i -> {
               if (i == 45 || i == 43) {
                   numberOfMinuses = i == 45 ? numberOfMinuses + 1 : numberOfMinuses;
-                  if (!variable.isEmpty())
+                  if (!variable.isEmpty()) {
                       var = variable.toString();
+                      variable = new StringBuilder();
+                  }
               } else if (i >= 48 && i <= 57){
                   co = numberOfMinuses % 2 == 0 ? 1 : -1;
                   coefficient.append((char)i);
+                  numberOfMinuses = 0;
               } else {
-                  co = co * Integer.parseInt(coefficient.toString());
+                  result += co * Integer.parseInt(coefficient.toString());
+                  coefficient = new StringBuilder();
                   variable.append((char)i);
               }
           });
 
+        return (result + var);
     }
 
     public static void main(String[] args) {
-        String[] a = new String[]{"a + 3g = k", "-70a = g"};
-        Solution.simplify(a, "-k + a");
-
+        String[] a = new String[]{"-3P = A", "7P - 4A = u", "P - 7A = l"};
+        System.out.println(Solution.simplify(a, "5A - 3(5u - 3l) + 5l"));
     }
 }

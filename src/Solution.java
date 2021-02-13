@@ -4,7 +4,6 @@ import java.util.Map;
 import java.util.Stack;
 
 public class Solution {
-    private static int totalCo;
     private static StringBuilder coefficient, variable;
     private static String var;
     private static boolean isReducible;
@@ -78,8 +77,8 @@ public class Solution {
         StringBuilder result = new StringBuilder();
         coefficient = new StringBuilder();
         Stack<Integer> stack = new Stack<>();
-        totalCo = 1;
         sign = 43;
+        variable = new StringBuilder();
 
         //remove whitespace
         reduce(s, equations).chars()
@@ -95,33 +94,28 @@ public class Solution {
                                  result.append(variable);
                                  variable = new StringBuilder();
                              }
-                             //result.append((char)i);
                              sign = i;
                          }else if (i == 40){
                              if (!coefficient.isEmpty()) {
-                                 totalCo = sign == 43 ? totalCo * Integer.parseInt(coefficient.toString()) : totalCo * Integer.parseInt(coefficient.toString()) * -1;
                                  stack.push(sign == 43 ? Integer.parseInt(coefficient.toString()) : Integer.parseInt(coefficient.toString()) * -1);
                                  coefficient = new StringBuilder();
-                             }else {
+                             }else
                                  stack.push(sign == 43 ? 1 : -1);
-                                 totalCo *= stack.peek();
-                             }
                              sign = 43;
                          }else if (i == 41) {
                              if (!variable.isEmpty()){
                                  result.append(variable);
                                  variable = new StringBuilder();
                              }
-                             totalCo /= stack.pop();
-                         }
-                         else {
+                             stack.pop();
+                         } else {
                              if (!coefficient.isEmpty()){
                                  result.append((char) sign);
-                                 result.append(totalCo * Integer.parseInt(coefficient.toString()));
+                                 result.append(stack.stream().reduce(1, (a, b) -> a * b) * Integer.parseInt(coefficient.toString()));
                                  coefficient = new StringBuilder();
                              }else {
                                  result.append((char) sign);
-                                 result.append(totalCo);
+                                 result.append(stack.stream().reduce(1, (a, b) -> a * b));
                              }
                              variable.append((char) i);
                          }
@@ -153,19 +147,22 @@ public class Solution {
               } else if (i >= 48 && i <= 57){
                   co = numberOfMinuses % 2 == 0 ? 1 : -1;
                   coefficient.append((char)i);
-                  numberOfMinuses = 0;
               } else {
                   result += co * Integer.parseInt(coefficient.toString());
+                  numberOfMinuses = 0;
                   coefficient = new StringBuilder();
                   variable.append((char)i);
               }
           });
 
+        if (!variable.isEmpty())
+            var = variable.toString();
+
         return (result + var);
     }
 
     public static void main(String[] args) {
-        String[] a = new String[]{"-3P = A", "7P - 4A = u", "P - 7A = l"};
-        System.out.println(Solution.simplify(a, "5A - 3(5u - 3l) + 5l"));
+        String[] a = new String[]{"3q = A", "6q + 5A = r", "-6q + 3r = c", "-3q + 9A + 7r = t", "0q + 9A + 6r + 0c - 0t = F", "1q + 4A - 5r + 3c - 9F = N"};
+        System.out.println(Solution.simplify(a, "2(1r - 2r - 1F) - 2r - 2(6(6N - 2c - 1t) + 1N + 4r) + 2(1F + 4N) + 4F + 1(-2r + 4c)"));
     }
 }
